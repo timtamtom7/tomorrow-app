@@ -20,20 +20,23 @@ const LETTERS_COL = 'letters';
  * Create a new letter (draft or sealed).
  * Returns the new letter doc ref.
  */
-export async function createLetter({ senderId, senderName, recipientEmail, recipientName, subject, body, tone, deliverAt, status = 'draft' }) {
+export async function createLetter({ senderId, senderName, recipientEmail, recipientName, recipientRelationship, subject, body, tone, deliverAt, status = 'draft', photoAttachment, voiceAttachment, allowReply }) {
   const lettersRef = collection(db, LETTERS_COL);
   return addDoc(lettersRef, {
     senderId,
     senderName,
     recipientEmail: recipientEmail || null,
     recipientName: recipientName || null,
+    recipientRelationship: recipientRelationship || null,
     subject: subject || '',
     body,
     tone: tone || 'quiet',
     deliverAt: deliverAt ? new Date(deliverAt) : null,
     sentAt: status === 'sealed' ? new Date() : null,
     status,
-    allowReply: false,
+    allowReply: allowReply || false,
+    photoAttachment: photoAttachment || null,
+    voiceAttachment: voiceAttachment || null,
     createdAt: serverTimestamp(),
   });
 }

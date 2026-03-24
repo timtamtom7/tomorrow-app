@@ -133,6 +133,24 @@ export default function ReadLetter() {
                   <h2 className="read-letter-subject">{letter.subject}</h2>
                 )}
                 <div className="read-letter-divider" />
+                {/* Media attachments */}
+                {(letter.photoAttachment?.url || letter.voiceAttachment?.url) && (
+                  <div className="read-letter-media">
+                    {letter.photoAttachment?.url && (
+                      <img src={letter.photoAttachment.url} alt="Letter attachment" className="read-media-photo" />
+                    )}
+                    {letter.voiceAttachment?.url && (
+                      <div className="read-media-voice">
+                        <svg viewBox="0 0 20 20" fill="none" width="14" height="14">
+                          <rect x="7" y="1" width="6" height="11" rx="3" stroke="currentColor" strokeWidth="1.4"/>
+                          <path d="M4 9a5.5 5.5 0 0111 0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                          <path d="M7 15a5.5 5.5 0 006 0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                        </svg>
+                        Voice recording attached
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="read-letter-body prose-letter">
                   {letter.body?.split('\n').map((line, i) => (
                     <p key={i}>{line || '\u00A0'}</p>

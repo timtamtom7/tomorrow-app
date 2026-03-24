@@ -1,11 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { createLetter, sealLetter } from '../../lib/firestore';
+import { createLetter, sealLetter, updateLetter } from '../../lib/firestore';
+import { subscribeToUserRecipients } from '../../lib/recipients';
 import { sendLetterEmail } from '../../lib/email';
+import { getTemplateById } from '../../lib/templates';
 import Navbar from '../../components/Navbar';
 import Button from '../../components/ui/Button';
 import Input, { Textarea } from '../../components/ui/Input';
+import RecipientCard from '../../components/Recipient/RecipientCard';
+import RecipientModal from '../../components/Recipient/RecipientModal';
+import TemplatePicker from '../../components/Template/TemplatePicker';
+import MediaAttachments from '../../components/Media/MediaAttachments';
+import ErrorBanner from '../../components/ErrorState/ErrorBanner';
 import './Write.css';
 
 const TONES = [
@@ -17,7 +24,8 @@ const TONES = [
 
 const RECIPIENT_TYPES = [
   { value: 'me', label: 'Future Me', icon: '✦' },
-  { value: 'other', label: 'Someone Else', icon: '💌' },
+  { value: 'saved', label: 'Saved Recipient', icon: '💌' },
+  { value: 'other', label: 'New Recipient', icon: '📝' },
 ];
 
 function getMinDate() {
@@ -46,22 +54,51 @@ function setActiveLettersCount(n) {
   localStorage.setItem('tomorrow-active-count', String(n));
 }
 
+function fillTemplatePlaceholder(template) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.toLocaleDateString('en-US', { month: 'long' });
+  const day = now.getDate();
+  const today = `${month} ${day}, ${year}`;
+  return template.placeholder.replace('{date}', today);
+}
+
 export default function Write() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // Form state
   const [recipientType, setRecipientType] = useState('me');
+  const [selectedRecipient, setSelectedRecipient] = useState(null);
   const [recipientEmail, setRecipientEmail] = useState('');
   const [recipientName, setRecipientName] = useState('');
+  const [recipientRelationship, setRecipientRelationship] = useState('');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [tone, setTone] = useState('quiet');
   const [deliverAt, setDeliverAt] = useState('');
   const [allowReply, setAllowReply] = useState(false);
+
+  // Media
+  const [photoAttachment, setPhotoAttachment] = useState(null);
+  const [voiceAttachment, setVoiceAttachment] = useState(null);
+
+  // UI state
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [subscription] = useState(getSubscription);
   const [showPastDateError, setShowPastDateError] = useState(false);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [showRecipientModal, setShowRecipientModal] = useState(false);
+  const [editingRecipient, setEditingRecipient] = useState(null);
+  const [savedRecipients, setSavedRecipients] = useState([]);
+  const [saveError, setSaveError] = useState('');
+  const [autoSaveStatus, setAutoSaveStatus] = useState('idle'); // idle | saving | saved | error
+  const [draftLetterId, setDraftLetterId] = useState(null);
+
+  // Refs
+  const autoSaveTimer = useRef(null);
+  const hasLoadedInitial = useRef(false);
 
   // Redirect to auth if not logged in
   useEffect(() => {
@@ -69,6 +106,78 @@ export default function Write() {
       navigate('/auth?redirect=/write');
     }
   }, [user, navigate]);
+
+  // Subscribe to saved recipients
+  useEffect(() => {
+    if (!user) return;
+    const unsub = subscribeToUserRecipients(user.uid, setSavedRecipients);
+    return unsub;
+  }, [user]);
+
+  // Apply template to body
+  function applyTemplate(template) {
+    const filled = fillTemplatePlaceholder(template);
+    setBody(filled);
+    if (template.recipientType === 'me') {
+      setRecipientType('me');
+    } else if (template.recipientType === 'other' && template.relationship) {
+      setRecipientType('other');
+      setRecipientRelationship(template.relationship);
+    }
+    setShowTemplatePicker(false);
+  }
+
+  // Auto-save draft
+  const saveDraft = useCallback(async (data) => {
+    if (!user || !body.trim()) return;
+    setAutoSaveStatus('saving');
+    try {
+      if (draftLetterId) {
+        await updateLetter(draftLetterId, { ...data, status: 'draft' });
+      } else {
+        const ref = await createLetter({ ...data, senderId: user.uid, senderName: user.displayName || user.email || 'Someone', status: 'draft' });
+        setDraftLetterId(ref.id);
+      }
+      setAutoSaveStatus('saved');
+      setTimeout(() => setAutoSaveStatus('idle'), 2000);
+    } catch {
+      setAutoSaveStatus('error');
+    }
+  }, [user, draftLetterId, body]);
+
+  // Debounced auto-save on body/recipient changes
+  useEffect(() => {
+    if (!user || !body.trim() || hasLoadedInitial.current === false) return;
+    clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(() => {
+      const data = buildLetterData();
+      saveDraft(data);
+    }, 2000);
+    return () => clearTimeout(autoSaveTimer.current);
+  }, [body, recipientEmail, recipientName, subject, tone, deliverAt, recipientRelationship]);
+
+  function buildLetterData() {
+    const recipientEmailVal = recipientType === 'saved' && selectedRecipient
+      ? selectedRecipient.email
+      : recipientType === 'other' ? recipientEmail : null;
+    const recipientNameVal = recipientType === 'saved' && selectedRecipient
+      ? selectedRecipient.name
+      : recipientType === 'other' ? recipientName
+      : recipientType === 'me' ? 'Future Me' : 'Someone';
+
+    return {
+      recipientEmail: recipientEmailVal || null,
+      recipientName: recipientNameVal,
+      recipientRelationship: recipientRelationship || null,
+      subject: subject.trim(),
+      body: body.trim(),
+      tone,
+      deliverAt: deliverAt || null,
+      photoAttachment: photoAttachment || null,
+      voiceAttachment: voiceAttachment || null,
+      allowReply,
+    };
+  }
 
   function handleDeliverAtChange(e) {
     const val = e.target.value;
@@ -83,13 +192,14 @@ export default function Write() {
         return next;
       });
     }
+    hasLoadedInitial.current = true;
   }
 
   function validate(allowCountCheck = true) {
     const errs = {};
 
-    if (deliverAt && new Date(deliverAt) <= new Date()) {
-      errs.deliverAt = 'Choose a date in the future.';
+    if (recipientType === 'saved' && !selectedRecipient) {
+      errs.recipient = 'Please select a recipient from your saved list.';
     }
     if (recipientType === 'other') {
       if (!recipientEmail.trim()) errs.recipientEmail = 'Email address is required.';
@@ -98,6 +208,7 @@ export default function Write() {
     if (!body.trim()) errs.body = 'Your letter can\'t be empty.';
     else if (body.trim().length < 10) errs.body = 'Your letter feels a bit short. Say a bit more.';
     if (!deliverAt) errs.deliverAt = 'Pick a delivery date.';
+    if (deliverAt && new Date(deliverAt) <= new Date()) errs.deliverAt = 'Choose a date in the future.';
     return errs;
   }
 
@@ -109,35 +220,39 @@ export default function Write() {
       return;
     }
     setErrors({});
+    setSaveError('');
     setSubmitting(true);
 
     try {
       const isSealed = action === 'seal';
+      const data = buildLetterData();
       const letterData = {
         senderId: user.uid,
         senderName: user.displayName || user.email || 'Someone',
-        recipientEmail: recipientType === 'other' ? recipientEmail : null,
-        recipientName: recipientType === 'other' ? recipientName : 'Future Me',
-        subject: subject.trim(),
-        body: body.trim(),
-        tone,
-        deliverAt,
+        ...data,
         status: isSealed ? 'sealed' : 'draft',
       };
 
-      const letterRef = await createLetter(letterData);
+      let letterRef;
+      if (draftLetterId) {
+        // Update existing draft
+        await updateLetter(draftLetterId, { ...letterData });
+        letterRef = { id: draftLetterId };
+      } else {
+        letterRef = await createLetter(letterData);
+      }
 
       if (isSealed) {
-        // Track active letters for free tier
         if (subscription.plan === 'free') {
           setActiveLettersCount(getActiveLettersCount() + 1);
         }
-        if (recipientType === 'other' && recipientEmail) {
+        const recipientEmailVal = data.recipientEmail;
+        if (recipientType !== 'me' && recipientEmailVal) {
           await sendLetterEmail({
-            to: recipientEmail,
+            to: recipientEmailVal,
             senderName: user.displayName || user.email || 'Someone',
-            subject: subject.trim(),
-            body: body.trim(),
+            subject: data.subject,
+            body: data.body,
             letterId: letterRef.id,
           });
         }
@@ -147,10 +262,22 @@ export default function Write() {
       }
     } catch (err) {
       console.error('Failed to save letter:', err);
-      setErrors({ form: 'Failed to save your letter. Check that Firebase is configured, or try again.' });
+      setSaveError('Failed to save your letter. Check that Firebase is configured, or try again.');
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function handleRecipientSelect(recipient) {
+    setSelectedRecipient(recipient);
+    setRecipientType('saved');
+    setRecipientEmail(recipient.email || '');
+    setRecipientName(recipient.name || '');
+    setRecipientRelationship(recipient.relationship || '');
+  }
+
+  function handleRecipientModalSaved() {
+    // Recipients list will update via subscription
   }
 
   return (
@@ -160,10 +287,36 @@ export default function Write() {
       <main className="write-main">
         <div className="write-container">
           <header className="write-header">
-            <h1 className="write-title">Write a Letter</h1>
-            <p className="write-subtitle">
-              Write now. Send later. This letter will arrive exactly once, on the day you choose.
-            </p>
+            <div className="write-header-row">
+              <div>
+                <h1 className="write-title">Write a Letter</h1>
+                <p className="write-subtitle">
+                  Write now. Send later. This letter will arrive exactly once, on the day you choose.
+                </p>
+              </div>
+              {autoSaveStatus !== 'idle' && (
+                <div className={`autosave-indicator autosave-${autoSaveStatus}`}>
+                  {autoSaveStatus === 'saving' && (
+                    <span className="autosave-dot" />
+                  )}
+                  {autoSaveStatus === 'saved' && <span className="autosave-text">Draft saved</span>}
+                  {autoSaveStatus === 'error' && <span className="autosave-text autosave-error">Save failed</span>}
+                </div>
+              )}
+            </div>
+
+            {/* Template quick-pick */}
+            {!body && (
+              <button
+                className="write-template-prompt-btn"
+                onClick={() => setShowTemplatePicker(true)}
+              >
+                <svg viewBox="0 0 20 20" fill="none" width="14" height="14">
+                  <path d="M3 5h14M3 10h10M3 15h7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                </svg>
+                Start with a template?
+              </button>
+            )}
           </header>
 
           <form className="write-form" onSubmit={() => {}} noValidate>
@@ -176,7 +329,11 @@ export default function Write() {
                     key={rt.value}
                     type="button"
                     className={`recipient-type-btn ${recipientType === rt.value ? 'recipient-type-btn-active' : ''}`}
-                    onClick={() => setRecipientType(rt.value)}
+                    onClick={() => {
+                      setRecipientType(rt.value);
+                      if (rt.value !== 'saved') setSelectedRecipient(null);
+                      hasLoadedInitial.current = true;
+                    }}
                   >
                     <span className="recipient-type-icon">{rt.icon}</span>
                     <span className="recipient-type-label">{rt.label}</span>
@@ -184,23 +341,95 @@ export default function Write() {
                 ))}
               </div>
 
+              {/* Saved recipients */}
+              {recipientType === 'saved' && (
+                <div className="recipient-saved-section stagger-in">
+                  {savedRecipients.length > 0 ? (
+                    <div className="recipient-saved-list">
+                      {savedRecipients.map(r => (
+                        <RecipientCard
+                          key={r.id}
+                          recipient={r}
+                          compact
+                          onEdit={() => {
+                            setEditingRecipient(r);
+                            setShowRecipientModal(true);
+                          }}
+                        />
+                      ))}
+                      <button
+                        type="button"
+                        className="recipient-saved-add"
+                        onClick={() => {
+                          setEditingRecipient(null);
+                          setShowRecipientModal(true);
+                        }}
+                      >
+                        <span>+</span> Add new recipient
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="recipient-saved-empty">
+                      <p className="recipient-saved-empty-text">No saved recipients yet.</p>
+                      <button
+                        type="button"
+                        className="recipient-saved-add"
+                        onClick={() => {
+                          setEditingRecipient(null);
+                          setShowRecipientModal(true);
+                        }}
+                      >
+                        <span>+</span> Add your first recipient
+                      </button>
+                    </div>
+                  )}
+                  {savedRecipients.map(r => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      className={`recipient-saved-chip ${selectedRecipient?.id === r.id ? 'recipient-saved-chip-active' : ''}`}
+                      onClick={() => handleRecipientSelect(r)}
+                    >
+                      <span className="recipient-saved-chip-icon">💌</span>
+                      {r.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* New recipient fields */}
               {recipientType === 'other' && (
                 <div className="recipient-other-fields stagger-in">
+                  <Input
+                    label="Recipient's name"
+                    placeholder="Sofia, Mom, Future Child…"
+                    value={recipientName}
+                    onChange={e => { setRecipientName(e.target.value); hasLoadedInitial.current = true; }}
+                  />
                   <Input
                     label="Recipient's email"
                     type="email"
                     placeholder="them@example.com"
                     value={recipientEmail}
-                    onChange={e => setRecipientEmail(e.target.value)}
+                    onChange={e => { setRecipientEmail(e.target.value); hasLoadedInitial.current = true; }}
                     error={errors.recipientEmail}
+                    hint="The letter notification will be sent here."
                   />
-                  <Input
-                    label="Recipient's name (optional)"
-                    placeholder="Sofia, Mom, Future Child…"
-                    value={recipientName}
-                    onChange={e => setRecipientName(e.target.value)}
-                    hint="Shows as 'A letter from [name]' in the email"
-                  />
+                  <div className="field">
+                    <label className="field-label">Relationship</label>
+                    <div className="relationship-picker">
+                      {['Child', 'Partner', 'Parent', 'Sibling', 'Friend', 'Other'].map(rel => (
+                        <button
+                          key={rel}
+                          type="button"
+                          className={`relationship-chip ${recipientRelationship === rel.toLowerCase() ? 'relationship-chip-active' : ''}`}
+                          onClick={() => { setRecipientRelationship(rel.toLowerCase()); hasLoadedInitial.current = true; }}
+                        >
+                          {rel}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -208,6 +437,10 @@ export default function Write() {
                 <p className="write-hint">
                   This letter will arrive in your own Tomorrow inbox on the delivery date.
                 </p>
+              )}
+
+              {errors.recipient && (
+                <p className="field-error-msg">{errors.recipient}</p>
               )}
             </section>
 
@@ -217,21 +450,35 @@ export default function Write() {
                 label="Subject line (optional)"
                 placeholder="A note for when things change…"
                 value={subject}
-                onChange={e => setSubject(e.target.value)}
+                onChange={e => { setSubject(e.target.value); hasLoadedInitial.current = true; }}
                 hint="Optional. The recipient will see this before opening."
               />
             </section>
 
             {/* Body */}
             <section className="write-section write-textarea-section stagger-in">
-              <Textarea
-                label="Your letter"
-                placeholder="Dear Future Me,&#10;&#10;Right now, I'm…&#10;&#10;I hope that when you read this…"
-                value={body}
-                onChange={e => setBody(e.target.value)}
-                rows={12}
-                error={errors.body}
-              />
+              <div className="write-body-header">
+                <Textarea
+                  label="Your letter"
+                  placeholder={"Dear Future Me,\n\nRight now, I'm…\n\nI hope that when you read this…"}
+                  value={body}
+                  onChange={e => { setBody(e.target.value); hasLoadedInitial.current = true; }}
+                  rows={14}
+                  error={errors.body}
+                />
+                {!body && (
+                  <button
+                    type="button"
+                    className="write-template-fab"
+                    onClick={() => setShowTemplatePicker(true)}
+                    title="Use a template"
+                  >
+                    <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+                      <path d="M3 5h14M3 10h10M3 15h7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                )}
+              </div>
               <p className="write-body-hint">
                 Write freely. This is between you and the future.
               </p>
@@ -255,19 +502,16 @@ export default function Write() {
               </div>
             </section>
 
-            {/* Pro features note */}
-            {(subscription.plan === 'free') && (
-              <section className="write-section">
-                <div className="write-pro-note">
-                  <span className="write-pro-note-icon">✦</span>
-                  <p className="write-pro-note-text">
-                    <strong>Photo attachments</strong> and <strong>voice recording</strong> are available with{' '}
-                    <Link to="/pricing" className="write-pro-link">Keeper</Link> or{' '}
-                    <Link to="/pricing" className="write-pro-link">Legacy</Link>.
-                  </p>
-                </div>
-              </section>
-            )}
+            {/* Media attachments (Keeper+) */}
+            <section className="write-section stagger-in">
+              <MediaAttachments
+                subscription={subscription}
+                onPhotoChange={setPhotoAttachment}
+                onVoiceChange={setVoiceAttachment}
+                photoUrls={photoAttachment}
+                voiceUrl={voiceAttachment}
+              />
+            </section>
 
             {/* Delivery date */}
             <section className="write-section stagger-in">
@@ -313,6 +557,7 @@ export default function Write() {
                             delete next.deliverAt;
                             return next;
                           });
+                          hasLoadedInitial.current = true;
                         }}
                       >
                         {tf.label}
@@ -324,7 +569,7 @@ export default function Write() {
             </section>
 
             {/* Allow reply (for other recipients) */}
-            {recipientType === 'other' && (
+            {recipientType !== 'me' && (
               <section className="write-section">
                 <div className="reply-toggle">
                   <div>
@@ -344,14 +589,13 @@ export default function Write() {
               </section>
             )}
 
-            {errors.form && (
-              <div className="write-error-banner">
-                <span className="write-error-icon">!</span>
-                <div>
-                  <p className="write-error-title">Letter save failed</p>
-                  <p className="write-error-body">{errors.form}</p>
-                </div>
-              </div>
+            {/* Form-level save error */}
+            {saveError && (
+              <ErrorBanner
+                title="Letter save failed"
+                body={saveError}
+                onDismiss={() => setSaveError('')}
+              />
             )}
 
             {/* Actions */}
@@ -376,6 +620,31 @@ export default function Write() {
           </form>
         </div>
       </main>
+
+      {/* Template picker modal */}
+      {showTemplatePicker && (
+        <TemplatePicker
+          onSelect={template => {
+            if (template) applyTemplate(template);
+            else setShowTemplatePicker(false);
+          }}
+          onClose={() => setShowTemplatePicker(false)}
+        />
+      )}
+
+      {/* Recipient modal */}
+      {showRecipientModal && user && (
+        <RecipientModal
+          user={user}
+          recipient={editingRecipient}
+          onClose={() => {
+            setShowRecipientModal(false);
+            setEditingRecipient(null);
+          }}
+          onSaved={handleRecipientModalSaved}
+          onDeleted={handleRecipientModalSaved}
+        />
+      )}
     </div>
   );
 }

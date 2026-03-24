@@ -300,8 +300,10 @@ export default function Dashboard() {
                         <div className="letter-card-recipient">
                           {letter.recipientEmail ? (
                             <>
-                              <span className="recipient-badge">To someone else</span>
-                              <span className="letter-recipient-name">{letter.recipientName}</span>
+                              <span className="recipient-badge">To {letter.recipientName || 'someone'}</span>
+                              {letter.recipientRelationship && (
+                                <span className="recipient-relationship-tag-small">{letter.recipientRelationship}</span>
+                              )}
                             </>
                           ) : (
                             <span className="letter-recipient-name">Future Me</span>

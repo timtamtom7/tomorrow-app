@@ -367,6 +367,16 @@
   border-color: var(--color-error);
 }
 
+.recipient-relationship-tag-small {
+  font-size: 10px;
+  font-weight: var(--weight-medium);
+  color: var(--color-recipient);
+  background: var(--color-recipient-subtle);
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  text-transform: capitalize;
+}
+
 /* Upgrade modal */
 .upgrade-modal-backdrop {
   position: fixed;

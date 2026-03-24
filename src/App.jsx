@@ -9,6 +9,7 @@ import ReadLetter from './pages/ReadLetter/ReadLetter';
 import Auth from './pages/Auth/Auth';
 import Settings from './pages/Settings/Settings';
 import Pricing from './pages/Pricing/Pricing';
+import Recipients from './pages/Recipients/Recipients';
 import FirebaseErrorBanner from './components/ErrorState/FirebaseErrorBanner';
 import OnboardingOverlay from './components/Onboarding/OnboardingOverlay';
 import './styles/global.css';
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="/write" element={<Write />} />
           <Route path="/app" element={<Dashboard />} />
           <Route path="/app/letters/:id" element={<LetterDetail />} />
+          <Route path="/app/recipients" element={<Recipients />} />
           <Route path="/letter/:id" element={<ReadLetter />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/settings" element={<Settings />} />
