@@ -276,6 +276,17 @@
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
   color: var(--color-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-sans);
+  text-decoration: none;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.read-done-home:hover {
+  opacity: 0.75;
 }
 
 /* Already opened */
@@ -340,5 +351,42 @@
 
   .read-confirm-sender {
     font-size: var(--text-4xl);
+  }
+}
+
+@media (max-width: 375px) {
+  .read-main {
+    padding: var(--space-6) var(--space-3);
+    align-items: flex-start;
+  }
+
+  .read-confirm {
+    padding: var(--space-8) var(--space-5);
+  }
+
+  .read-confirm-sender {
+    font-size: var(--text-3xl);
+  }
+
+  .read-letter-card {
+    padding: var(--space-5) var(--space-4);
+    border-radius: var(--radius-lg);
+  }
+
+  .read-letter-from-name {
+    font-size: var(--text-2xl);
+  }
+
+  .read-letter-body {
+    font-size: var(--text-lg);
+  }
+
+  .read-confirm-warning {
+    font-size: var(--text-sm);
+  }
+
+  .read-already-title,
+  .read-expired-title {
+    font-size: var(--text-2xl);
   }
 }

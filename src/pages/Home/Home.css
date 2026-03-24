@@ -304,3 +304,48 @@
     text-align: center;
   }
 }
+
+@media (max-width: 375px) {
+  .home-inner {
+    padding: var(--space-6) var(--space-4);
+    gap: var(--space-6);
+  }
+
+  .home-heading {
+    font-size: 32px;
+  }
+
+  .home-body {
+    font-size: var(--text-base);
+  }
+
+  .home-how {
+    padding: var(--space-10) var(--space-4);
+  }
+
+  .home-how-heading {
+    font-size: var(--text-2xl);
+    margin-bottom: var(--space-8);
+  }
+
+  .home-cta {
+    padding: var(--space-10) var(--space-4);
+  }
+
+  .home-cta-heading {
+    font-size: var(--text-3xl);
+  }
+
+  .home-cta-body {
+    font-size: var(--text-base);
+  }
+
+  .feature-chip {
+    font-size: 10px;
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .home-footer {
+    padding: var(--space-6) var(--space-4);
+  }
+}

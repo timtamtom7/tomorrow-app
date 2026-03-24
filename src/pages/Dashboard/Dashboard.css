@@ -301,3 +301,48 @@
     align-items: flex-start;
   }
 }
+
+@media (max-width: 375px) {
+  .app-main {
+    padding: var(--space-6) var(--space-3) var(--space-12);
+  }
+
+  .app-title {
+    font-size: var(--text-3xl);
+  }
+
+  .app-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-2);
+  }
+
+  .stat-card {
+    padding: var(--space-3) !important;
+  }
+
+  .stat-num {
+    font-size: var(--text-3xl);
+  }
+
+  .app-filters {
+    overflow-x: auto;
+  }
+
+  .filter-btn {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-xs);
+  }
+
+  .letter-card-inner {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .letter-card-right {
+    align-items: flex-start !important;
+  }
+
+  .app-empty {
+    padding: var(--space-12) var(--space-4);
+  }
+}

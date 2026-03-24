@@ -15,21 +15,28 @@ export default function ReadLetter() {
 
   useEffect(() => {
     async function fetchLetter() {
-      const fetched = await getLetter(id);
-      if (!fetched) {
-        navigate('/');
-        return;
-      }
-      setLetter(fetched);
+      try {
+        const fetched = await getLetter(id);
+        if (!fetched) {
+          navigate('/');
+          return;
+        }
+        setLetter(fetched);
 
-      if (fetched.status === 'opened') {
-        setPhase('already');
-      } else if (fetched.status !== 'delivered' && fetched.status !== 'sealed') {
+        if (fetched.status === 'opened') {
+          setPhase('already');
+        } else if (fetched.status !== 'delivered' && fetched.status !== 'sealed') {
+          setPhase('expired');
+        } else {
+          setPhase('confirm');
+        }
+      } catch (err) {
+        // Firebase not configured or other error
+        console.error('Failed to load letter:', err);
         setPhase('expired');
-      } else {
-        setPhase('confirm');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchLetter();
   }, [id, navigate]);
@@ -137,9 +144,9 @@ export default function ReadLetter() {
                 <p className="read-done-text">
                   This letter has been sealed forever.
                 </p>
-                <a href="/" className="read-done-home">
+                <button className="read-done-home" onClick={() => navigate('/')}>
                   Return to Tomorrow
-                </a>
+                </button>
               </div>
             </div>
           )}

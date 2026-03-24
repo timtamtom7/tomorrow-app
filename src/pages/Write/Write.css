@@ -281,3 +281,38 @@
     flex-direction: column;
   }
 }
+
+@media (max-width: 375px) {
+  .write-main {
+    padding: var(--space-6) 0 var(--space-12);
+  }
+
+  .write-container {
+    padding: 0 var(--space-4);
+  }
+
+  .write-title {
+    font-size: var(--text-3xl);
+  }
+
+  .recipient-type-selector {
+    grid-template-columns: 1fr;
+  }
+
+  .tone-selector {
+    grid-template-columns: 1fr;
+  }
+
+  .write-actions {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .recipient-type-btn {
+    padding: var(--space-4);
+  }
+
+  .tone-btn {
+    padding: var(--space-3);
+  }
+}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth, FIREBASE_CONFIGURED } from '../../context/AuthContext';
 import { signIn, signUp } from '../../lib/auth';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -60,6 +60,19 @@ export default function Auth() {
       </header>
 
       <main className="auth-main">
+        {!FIREBASE_CONFIGURED && (
+          <div className="auth-config-warning">
+            <span className="auth-config-icon">⚠</span>
+            <div>
+              <p className="auth-config-title">Firebase not configured</p>
+              <p className="auth-config-body">
+                To enable sign up / sign in, add your Firebase credentials to{' '}
+                <code>src/firebase/config.js</code>.
+                See <code>TO-DO.md</code> for setup instructions.
+              </p>
+            </div>
+          </div>
+        )}
         <div className="auth-card-wrap">
           <Card className="auth-card">
             <div className="auth-card-header">
