@@ -203,6 +203,151 @@
   flex-shrink: 0;
 }
 
+/* Subscription */
+.subscription-card {
+  overflow: hidden;
+}
+
+.subscription-card-inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.subscription-plan-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.subscription-plan-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.subscription-plan-name {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.subscription-plan-price {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.subscription-plan-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.subscription-plan-badge.free {
+  background: var(--surface-elevated);
+  color: var(--text-muted);
+}
+
+.subscription-divider {
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+.subscription-features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.subscription-feature-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.subscription-feature-item-icon {
+  color: var(--color-success);
+  font-size: 12px;
+}
+
+.subscription-feature-item-icon.locked {
+  color: var(--text-muted);
+}
+
+.subscription-upgrade-btn {
+  margin-top: var(--space-1);
+}
+
+.subscription-manage-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--space-1);
+}
+
+.subscription-manage-label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.subscription-manage-link {
+  font-size: var(--text-sm);
+  color: var(--color-accent);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.subscription-manage-link:hover {
+  opacity: 0.8;
+}
+
+.subscription-cancel-note {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-top: var(--space-2);
+  font-family: var(--font-serif);
+  font-style: italic;
+}
+
+/* Pro features locked */
+.pro-feature-locked {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-elevated);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-2);
+}
+
+.pro-feature-locked-icon {
+  color: var(--color-accent);
+  font-size: 12px;
+}
+
+.pro-feature-locked-text {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.pro-feature-locked-text strong {
+  color: var(--color-accent);
+  font-weight: var(--weight-medium);
+}
+
 /* Danger zone */
 .settings-danger-card {
   border-color: var(--color-error-subtle) !important;

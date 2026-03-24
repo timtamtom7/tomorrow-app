@@ -113,6 +113,37 @@ img {
   border-width: 0;
 }
 
+/* Skeleton loading */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-elevated) 25%,
+    var(--surface-hover) 50%,
+    var(--surface-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Pro badge (global) */
+.pro-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  vertical-align: middle;
+}
+
 /* Page transitions */
 .page-enter {
   opacity: 0;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { createLetter, sealLetter } from '../../lib/firestore';
 import { sendLetterEmail } from '../../lib/email';
@@ -26,6 +26,26 @@ function getMinDate() {
   return d.toISOString().split('T')[0];
 }
 
+function getSubscription() {
+  try {
+    return JSON.parse(localStorage.getItem('tomorrow-subscription') || '{"plan":"free"}');
+  } catch {
+    return { plan: 'free' };
+  }
+}
+
+function getActiveLettersCount() {
+  try {
+    return parseInt(localStorage.getItem('tomorrow-active-count') || '0', 10);
+  } catch {
+    return 0;
+  }
+}
+
+function setActiveLettersCount(n) {
+  localStorage.setItem('tomorrow-active-count', String(n));
+}
+
 export default function Write() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -40,6 +60,8 @@ export default function Write() {
   const [allowReply, setAllowReply] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [subscription] = useState(getSubscription);
+  const [showPastDateError, setShowPastDateError] = useState(false);
 
   // Redirect to auth if not logged in
   useEffect(() => {
@@ -48,16 +70,34 @@ export default function Write() {
     }
   }, [user, navigate]);
 
-  function validate() {
+  function handleDeliverAtChange(e) {
+    const val = e.target.value;
+    setDeliverAt(val);
+    if (val && new Date(val) <= new Date()) {
+      setShowPastDateError(true);
+    } else {
+      setShowPastDateError(false);
+      setErrors(prev => {
+        const next = { ...prev };
+        delete next.deliverAt;
+        return next;
+      });
+    }
+  }
+
+  function validate(allowCountCheck = true) {
     const errs = {};
+
+    if (deliverAt && new Date(deliverAt) <= new Date()) {
+      errs.deliverAt = 'Choose a date in the future.';
+    }
     if (recipientType === 'other') {
       if (!recipientEmail.trim()) errs.recipientEmail = 'Email address is required.';
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) errs.recipientEmail = 'Enter a valid email address.';
     }
     if (!body.trim()) errs.body = 'Your letter can\'t be empty.';
-    if (body.trim().length < 10) errs.body = 'Your letter feels a bit short. Say a bit more.';
+    else if (body.trim().length < 10) errs.body = 'Your letter feels a bit short. Say a bit more.';
     if (!deliverAt) errs.deliverAt = 'Pick a delivery date.';
-    else if (new Date(deliverAt) <= new Date()) errs.deliverAt = 'Date must be at least tomorrow.';
     return errs;
   }
 
@@ -88,7 +128,10 @@ export default function Write() {
       const letterRef = await createLetter(letterData);
 
       if (isSealed) {
-        // Send email immediately for demo (in production this would be scheduled)
+        // Track active letters for free tier
+        if (subscription.plan === 'free') {
+          setActiveLettersCount(getActiveLettersCount() + 1);
+        }
         if (recipientType === 'other' && recipientEmail) {
           await sendLetterEmail({
             to: recipientEmail,
@@ -104,7 +147,7 @@ export default function Write() {
       }
     } catch (err) {
       console.error('Failed to save letter:', err);
-      setErrors({ form: 'Something went wrong. Please try again.' });
+      setErrors({ form: 'Failed to save your letter. Check that Firebase is configured, or try again.' });
     } finally {
       setSubmitting(false);
     }
@@ -212,6 +255,20 @@ export default function Write() {
               </div>
             </section>
 
+            {/* Pro features note */}
+            {(subscription.plan === 'free') && (
+              <section className="write-section">
+                <div className="write-pro-note">
+                  <span className="write-pro-note-icon">✦</span>
+                  <p className="write-pro-note-text">
+                    <strong>Photo attachments</strong> and <strong>voice recording</strong> are available with{' '}
+                    <Link to="/pricing" className="write-pro-link">Keeper</Link> or{' '}
+                    <Link to="/pricing" className="write-pro-link">Legacy</Link>.
+                  </p>
+                </div>
+              </section>
+            )}
+
             {/* Delivery date */}
             <section className="write-section stagger-in">
               <h2 className="write-section-title">When should this arrive?</h2>
@@ -219,11 +276,11 @@ export default function Write() {
                 type="date"
                 label="Delivery date"
                 value={deliverAt}
-                onChange={e => setDeliverAt(e.target.value)}
+                onChange={handleDeliverAtChange}
                 min={getMinDate()}
-                error={errors.deliverAt}
+                error={errors.deliverAt || (showPastDateError ? 'Choose a date in the future.' : undefined)}
               />
-              {deliverAt && (
+              {deliverAt && !showPastDateError && (
                 <p className="write-date-hint">
                   Your letter will be delivered on{' '}
                   <strong>{new Date(deliverAt + 'T09:00:00').toLocaleDateString('en-US', {
@@ -232,6 +289,37 @@ export default function Write() {
                   </strong>{' '}
                   Plan accordingly.
                 </p>
+              )}
+              {deliverAt && !showPastDateError && (
+                <div className="write-timeframe-chips">
+                  {[
+                    { label: '6 months', days: 183 },
+                    { label: '1 year', days: 365 },
+                    { label: '5 years', days: 1825 },
+                  ].map(tf => {
+                    const d = new Date();
+                    d.setDate(d.getDate() + tf.days);
+                    const dateStr = d.toISOString().split('T')[0];
+                    return (
+                      <button
+                        key={tf.label}
+                        type="button"
+                        className={`timeframe-chip ${deliverAt === dateStr ? 'timeframe-chip-active' : ''}`}
+                        onClick={() => {
+                          setDeliverAt(dateStr);
+                          setShowPastDateError(false);
+                          setErrors(prev => {
+                            const next = { ...prev };
+                            delete next.deliverAt;
+                            return next;
+                          });
+                        }}
+                      >
+                        {tf.label}
+                      </button>
+                    );
+                  })}
+                </div>
               )}
             </section>
 
@@ -257,7 +345,13 @@ export default function Write() {
             )}
 
             {errors.form && (
-              <p className="write-form-error">{errors.form}</p>
+              <div className="write-error-banner">
+                <span className="write-error-icon">!</span>
+                <div>
+                  <p className="write-error-title">Letter save failed</p>
+                  <p className="write-error-body">{errors.form}</p>
+                </div>
+              </div>
             )}
 
             {/* Actions */}

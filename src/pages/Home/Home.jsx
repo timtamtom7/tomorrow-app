@@ -88,6 +88,87 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Example letter — real excerpt */}
+      <section className="home-example">
+        <div className="home-example-inner">
+          <p className="home-example-eyebrow">What does a letter actually look like?</p>
+          <h2 className="home-example-heading">Written by someone today, for someone tomorrow.</h2>
+          <div className="home-example-letter">
+            <div className="home-example-letter-meta">
+              <span className="home-example-from">From: Marco</span>
+              <span className="home-example-date">Arriving: March 2027</span>
+            </div>
+            <div className="home-example-letter-body">
+              <p>
+                "Right now I'm sitting at the kitchen table with the window open.
+                The neighbour's kid is learning the trumpet — badly, but with genuine conviction.
+                I want to remember this version of ordinary. When you read this,
+                I hope you're somewhere you like being.
+              </p>
+              <p>
+                A year ago I wouldn't have written this. I would have thought it was too small,
+                too ordinary, not worth preserving. Now I think maybe the ordinary is exactly
+                what gets lost first. So here's me, holding onto it."
+              </p>
+              <p>
+                <em>— The version of me that still plays records on Sunday mornings.</em>
+              </p>
+            </div>
+            <div className="home-example-seal">
+              <span className="home-example-seal-icon">✦</span>
+              <span>Sealed. Waiting.</span>
+            </div>
+          </div>
+          <Link to="/write">
+            <Button variant="secondary" size="lg">
+              Write Your Own Letter →
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Use cases */}
+      <section className="home-usecases">
+        <div className="home-usecases-inner">
+          <h2 className="home-usecases-heading">Letters for every version of the future</h2>
+          <div className="home-usecases-grid">
+            <div className="usecase-card">
+              <div className="usecase-icon">🌱</div>
+              <h3 className="usecase-title">For Future Me</h3>
+              <p className="usecase-body">
+                A year from now, five years. A note for when you've forgotten what this
+                version of you was thinking, feeling, hoping for.
+              </p>
+            </div>
+            <div className="usecase-card">
+              <div className="usecase-icon">💜</div>
+              <h3 className="usecase-title">For a Partner</h3>
+              <p className="usecase-body">
+                Write now, seal it for your anniversary, a move, a hard season.
+                Words written in calm that arrive when they matter most.
+              </p>
+            </div>
+            <div className="usecase-card">
+              <div className="usecase-icon">👶</div>
+              <h3 className="usecase-title">For Future Children</h3>
+              <p className="usecase-body">
+                Legacy members can write letters that unlock chapter by chapter as your
+                children grow — letters that grow with them.
+              </p>
+              <span className="usecase-pro-badge">Legacy</span>
+            </div>
+            <div className="usecase-card">
+              <div className="usecase-icon">🪴</div>
+              <h3 className="usecase-title">For Hard Seasons</h3>
+              <p className="usecase-body">
+                Write to yourself during something difficult. Set the date for when
+                you think you'll be through it — and see if you were right.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How it works */}
       <section className="home-how">
         <h2 className="home-how-heading">How Tomorrow works</h2>
@@ -105,7 +186,7 @@ export default function Home() {
             <div className="home-step-num">02</div>
             <h3 className="home-step-title">Seal</h3>
             <p className="home-step-body">
-              Set a delivery date — a year from now, five years, whenever feels right.
+              Set a delivery date — six months from now, a year, five years.
               Your letter is encrypted and sealed. There's no editing after you send.
             </p>
           </div>
@@ -130,8 +211,14 @@ export default function Home() {
             Trust the future. Write today.
           </p>
           <Link to="/write">
-            <Button variant="primary" size="lg">Write Your First Letter</Button>
+            <Button variant="primary" size="lg">✦ Write Your First Letter</Button>
           </Link>
+          <p className="home-cta-pricing-note">
+            Free to start.{' '}
+            <Link to="/pricing" className="home-cta-pricing-link">
+              See plans →
+            </Link>
+          </p>
         </div>
       </section>
 
@@ -139,6 +226,7 @@ export default function Home() {
       <footer className="home-footer">
         <p>Tomorrow — A message from the past.</p>
         <div className="home-footer-links">
+          <Link to="/pricing">Pricing</Link>
           <a href="/privacy">Privacy</a>
           <a href="/terms">Terms</a>
           <Link to="/settings">Settings</Link>

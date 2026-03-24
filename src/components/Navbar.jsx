@@ -24,6 +24,7 @@ export default function Navbar({ showWrite = true }) {
         <div className="navbar-actions">
           {user ? (
             <>
+              <Link to="/pricing" className="navbar-link">Pricing</Link>
               <Link to="/app" className="navbar-link">
                 Your Letters
               </Link>
@@ -38,6 +39,7 @@ export default function Navbar({ showWrite = true }) {
             </>
           ) : (
             <>
+              <Link to="/pricing" className="navbar-link">Pricing</Link>
               <Link to="/auth" className="navbar-link">Sign In</Link>
               {showWrite && (
                 <Link to="/write">

@@ -8,10 +8,40 @@ import Input from '../../components/ui/Input';
 import Card from '../../components/ui/Card';
 import './Settings.css';
 
+function getSubscription() {
+  try {
+    return JSON.parse(localStorage.getItem('tomorrow-subscription') || '{"plan":"free"}');
+  } catch {
+    return { plan: 'free' };
+  }
+}
+
+function saveSubscription(sub) {
+  localStorage.setItem('tomorrow-subscription', JSON.stringify(sub));
+}
+
+const PLAN_FEATURES = {
+  free: [],
+  keeper: [
+    'Unlimited active letters',
+    'Photo attachments',
+    'Voice recording',
+    'Scheduled delivery dates',
+  ],
+  legacy: [
+    'Everything in Keeper',
+    'AI Future Guidance',
+    'Priority delivery',
+    'Family tree letters',
+    'Letter series & chapters',
+  ],
+};
+
 export default function Settings() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [theme, setTheme] = useState(() => document.documentElement.getAttribute('data-theme') || 'dark');
+  const [subscription, setSubscription] = useState(getSubscription);
 
   useEffect(() => {
     if (!user) { navigate('/auth'); }
@@ -30,9 +60,18 @@ export default function Settings() {
 
   async function handleDeleteAccount() {
     if (!window.confirm('Delete your account and all letters? This cannot be undone.')) return;
-    // In production: call backend to delete user + data
     alert('Account deletion requires backend setup. Contact support.');
   }
+
+  function handleCancelSubscription() {
+    if (!window.confirm('Cancel your subscription? Your letters will still be delivered on their scheduled dates.')) return;
+    saveSubscription({ plan: 'free' });
+    setSubscription({ plan: 'free' });
+  }
+
+  const planName = subscription.plan === 'keeper' ? 'Keeper' : subscription.plan === 'legacy' ? 'Legacy' : 'Free';
+  const planPrice = subscription.plan === 'keeper' ? '$3.99 / month' : subscription.plan === 'legacy' ? '$9.99 / month' : 'Free forever';
+  const planFeatures = PLAN_FEATURES[subscription.plan] || [];
 
   return (
     <div className="settings-page page-enter">
@@ -55,6 +94,67 @@ export default function Settings() {
               <div className="settings-field">
                 <p className="settings-field-label">Email</p>
                 <p className="settings-field-value">{user?.email}</p>
+              </div>
+            </Card>
+          </section>
+
+          {/* Subscription */}
+          <section className="settings-section">
+            <h2 className="settings-section-title">Subscription</h2>
+            <Card className="subscription-card">
+              <div className="subscription-card-inner">
+                {/* Current plan */}
+                <div className="subscription-plan-row">
+                  <div className="subscription-plan-info">
+                    <p className="subscription-plan-name">
+                      ✦ {planName}
+                      <span className={`subscription-plan-badge ${subscription.plan === 'free' ? 'free' : ''}`}>
+                        {subscription.plan === 'free' ? 'Free' : subscription.plan === 'keeper' ? 'Active' : 'Active'}
+                      </span>
+                    </p>
+                    <p className="subscription-plan-price">{planPrice}</p>
+                  </div>
+                  {subscription.plan !== 'free' && (
+                    <Button variant="secondary" size="sm" onClick={handleCancelSubscription}>
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+
+                {subscription.plan !== 'free' && (
+                  <>
+                    <div className="subscription-divider" />
+                    <div className="subscription-features">
+                      {planFeatures.map((f, i) => (
+                        <div key={i} className="subscription-feature-item">
+                          <span className="subscription-feature-item-icon">✓</span>
+                          {f}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="subscription-cancel-note">
+                      "Cancel anytime. Your letters will still arrive on their dates."
+                    </p>
+                  </>
+                )}
+
+                {subscription.plan === 'free' && (
+                  <>
+                    <div className="subscription-divider" />
+                    <div className="pro-feature-locked">
+                      <span className="pro-feature-locked-icon">✦</span>
+                      <p className="pro-feature-locked-text">
+                        <strong>Keeper</strong> adds unlimited letters, photos, and voice recording.
+                        <strong> Legacy</strong> adds AI guidance from your past letters.
+                      </p>
+                    </div>
+                    <Link to="/pricing" className="subscription-upgrade-btn">
+                      <Button variant="primary" size="sm">
+                        ✦ Upgrade Your Plan
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </Card>
           </section>
