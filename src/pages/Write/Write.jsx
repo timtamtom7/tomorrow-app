@@ -7,7 +7,8 @@ import { sendLetterEmail } from '../../lib/email';
 import { getTemplateById } from '../../lib/templates';
 import Navbar from '../../components/Navbar';
 import Button from '../../components/ui/Button';
-import Input, { Textarea } from '../../components/ui/Input';
+import Input from '../../components/ui/Input';
+import RichTextEditor from '../../components/ui/RichTextEditor';
 import RecipientCard from '../../components/Recipient/RecipientCard';
 import RecipientModal from '../../components/Recipient/RecipientModal';
 import TemplatePicker from '../../components/Template/TemplatePicker';
@@ -74,7 +75,7 @@ export default function Write() {
   const [recipientName, setRecipientName] = useState('');
   const [recipientRelationship, setRecipientRelationship] = useState('');
   const [subject, setSubject] = useState('');
-  const [body, setBody] = useState('');
+  const [body, setBody] = useState({ plain: '', html: '' });
   const [tone, setTone] = useState('quiet');
   const [deliverAt, setDeliverAt] = useState('');
   const [allowReply, setAllowReply] = useState(false);
@@ -117,7 +118,9 @@ export default function Write() {
   // Apply template to body
   function applyTemplate(template) {
     const filled = fillTemplatePlaceholder(template);
-    setBody(filled);
+    // Convert plain text newlines to HTML <br> tags for the rich text editor
+    const html = filled.replace(/\n/g, '<br>');
+    setBody({ plain: filled, html });
     if (template.recipientType === 'me') {
       setRecipientType('me');
     } else if (template.recipientType === 'other' && template.relationship) {
@@ -129,7 +132,7 @@ export default function Write() {
 
   // Auto-save draft
   const saveDraft = useCallback(async (data) => {
-    if (!user || !body.trim()) return;
+    if (!user || !body.plain.trim()) return;
     setAutoSaveStatus('saving');
     try {
       if (draftLetterId) {
@@ -147,7 +150,7 @@ export default function Write() {
 
   // Debounced auto-save on body/recipient changes
   useEffect(() => {
-    if (!user || !body.trim() || hasLoadedInitial.current === false) return;
+    if (!user || !body.plain.trim() || hasLoadedInitial.current === false) return;
     clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(() => {
       const data = buildLetterData();
@@ -170,7 +173,8 @@ export default function Write() {
       recipientName: recipientNameVal,
       recipientRelationship: recipientRelationship || null,
       subject: subject.trim(),
-      body: body.trim(),
+      body: body.plain.trim(),
+      bodyHtml: body.html || null,
       tone,
       deliverAt: deliverAt || null,
       photoAttachment: photoAttachment || null,
@@ -205,8 +209,8 @@ export default function Write() {
       if (!recipientEmail.trim()) errs.recipientEmail = 'Email address is required.';
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) errs.recipientEmail = 'Enter a valid email address.';
     }
-    if (!body.trim()) errs.body = 'Your letter can\'t be empty.';
-    else if (body.trim().length < 10) errs.body = 'Your letter feels a bit short. Say a bit more.';
+    if (!body.plain.trim()) errs.body = 'Your letter can\'t be empty.';
+    else if (body.plain.trim().length < 10) errs.body = 'Your letter feels a bit short. Say a bit more.';
     if (!deliverAt) errs.deliverAt = 'Pick a delivery date.';
     if (deliverAt && new Date(deliverAt) <= new Date()) errs.deliverAt = 'Choose a date in the future.';
     return errs;
@@ -253,6 +257,7 @@ export default function Write() {
             senderName: user.displayName || user.email || 'Someone',
             subject: data.subject,
             body: data.body,
+            bodyHtml: data.bodyHtml || null,
             letterId: letterRef.id,
           });
         }
@@ -306,7 +311,7 @@ export default function Write() {
             </div>
 
             {/* Template quick-pick */}
-            {!body && (
+            {!body.plain && (
               <button
                 className="write-template-prompt-btn"
                 onClick={() => setShowTemplatePicker(true)}
@@ -457,30 +462,32 @@ export default function Write() {
 
             {/* Body */}
             <section className="write-section write-textarea-section stagger-in">
-              <div className="write-body-header">
-                <Textarea
-                  label="Your letter"
-                  placeholder={"Dear Future Me,\n\nRight now, I'm…\n\nI hope that when you read this…"}
-                  value={body}
-                  onChange={e => { setBody(e.target.value); hasLoadedInitial.current = true; }}
-                  rows={14}
-                  error={errors.body}
-                />
-                {!body && (
+              <RichTextEditor
+                label="Your letter"
+                placeholder={"Dear Future Me,\n\nRight now, I'm…\n\nI hope that when you read this…"}
+                value={body.html}
+                onChange={({ html, plain }) => {
+                  setBody({ html, plain });
+                  hasLoadedInitial.current = true;
+                }}
+                error={errors.body}
+              />
+              {!body.plain && (
+                <div className="write-body-hint-row">
                   <button
                     type="button"
-                    className="write-template-fab"
+                    className="write-template-fab-inline"
                     onClick={() => setShowTemplatePicker(true)}
-                    title="Use a template"
                   >
-                    <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+                    <svg viewBox="0 0 20 20" fill="none" width="12" height="12">
                       <path d="M3 5h14M3 10h10M3 15h7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
                     </svg>
+                    Start with a template?
                   </button>
-                )}
-              </div>
+                </div>
+              )}
               <p className="write-body-hint">
-                Write freely. This is between you and the future.
+                Write freely. Select text to add <strong>bold</strong>, <em>italic</em>, or <u>underline</u>.
               </p>
             </section>
 

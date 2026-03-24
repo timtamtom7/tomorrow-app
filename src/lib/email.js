@@ -13,8 +13,16 @@ const RESEND_API_URL = 'https://api.resend.com/emails/email';
  *
  * For Phase 1 MVP, letters are dispatched immediately on delivery date
  * via a cloud function.
+ *
+ * @param {object} opts
+ * @param {string} opts.to - recipient email
+ * @param {string} opts.senderName - sender display name
+ * @param {string} opts.subject - letter subject line
+ * @param {string} opts.body - plain text body (fallback)
+ * @param {string} [opts.bodyHtml] - rich HTML body (preferred, used if provided)
+ * @param {string} opts.letterId - Firestore letter ID
  */
-export async function sendLetterEmail({ to, senderName, subject, body, letterId }) {
+export async function sendLetterEmail({ to, senderName, subject, body, bodyHtml, letterId }) {
   if (RESEND_API_KEY === 'YOUR_RESEND_API_KEY') {
     console.warn('[Resend] API key not configured. Skipping email send.');
     return { success: false, reason: 'API key not configured' };
@@ -24,7 +32,7 @@ export async function sendLetterEmail({ to, senderName, subject, body, letterId 
   const tonePrefix = getTonePrefix(subject);
   const emailSubject = `${tonePrefix} A letter from ${senderName}`;
 
-  const html = buildLetterEmailHtml({ senderName, subject, body, claimUrl, emailSubject });
+  const html = buildLetterEmailHtml({ senderName, subject, body, bodyHtml, claimUrl, emailSubject });
 
   try {
     const res = await fetch(RESEND_API_URL, {
@@ -64,7 +72,12 @@ function getTonePrefix(subject) {
   return '';
 }
 
-function buildLetterEmailHtml({ senderName, subject, body, claimUrl, emailSubject }) {
+function buildLetterEmailHtml({ senderName, subject, body, bodyHtml, claimUrl, emailSubject }) {
+  // Use rich HTML body if provided, otherwise fall back to plain text with newline conversion
+  const emailBody = bodyHtml
+    ? bodyHtml
+    : `<p style="font-family:'Georgia',serif;font-size:17px;line-height:1.8;color:#1c1917;margin-bottom:32px;">${escapeHtml(body || '').replace(/\n/g, '<br>')}</p>`;
+
   return `
 <!DOCTYPE html>
 <html>
@@ -112,9 +125,10 @@ function buildLetterEmailHtml({ senderName, subject, body, claimUrl, emailSubjec
               ${subject ? `<p style="font-family:'Georgia',serif;font-size:16px;font-style:italic;color:#78716c;margin-bottom:16px;text-align:center;">${escapeHtml(subject)}</p>` : ''}
 
               <!-- Body -->
-              <p style="font-family:'Georgia',serif;font-size:17px;line-height:1.8;color:#1c1917;white-space:pre-wrap;margin-bottom:32px;">
-                ${escapeHtml(body).replace(/\n/g, '<br>')}
-              </p>
+              ${bodyHtml
+                ? `<div style="font-family:'Georgia',serif;font-size:17px;line-height:1.8;color:#1c1917;margin-bottom:32px;">${bodyHtml}</div>`
+                : emailBody
+              }
 
               <!-- CTA -->
               <div style="text-align:center;margin-top:32px;">

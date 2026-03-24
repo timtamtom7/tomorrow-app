@@ -20,7 +20,7 @@ const LETTERS_COL = 'letters';
  * Create a new letter (draft or sealed).
  * Returns the new letter doc ref.
  */
-export async function createLetter({ senderId, senderName, recipientEmail, recipientName, recipientRelationship, subject, body, tone, deliverAt, status = 'draft', photoAttachment, voiceAttachment, allowReply }) {
+export async function createLetter({ senderId, senderName, recipientEmail, recipientName, recipientRelationship, subject, body, bodyHtml, tone, deliverAt, status = 'draft', photoAttachment, voiceAttachment, allowReply }) {
   const lettersRef = collection(db, LETTERS_COL);
   return addDoc(lettersRef, {
     senderId,
@@ -29,7 +29,8 @@ export async function createLetter({ senderId, senderName, recipientEmail, recip
     recipientName: recipientName || null,
     recipientRelationship: recipientRelationship || null,
     subject: subject || '',
-    body,
+    body: body || '',
+    bodyHtml: bodyHtml || null,
     tone: tone || 'quiet',
     deliverAt: deliverAt ? new Date(deliverAt) : null,
     sentAt: status === 'sealed' ? new Date() : null,
@@ -154,4 +155,22 @@ export function subscribeToLetter(letterId, callback) {
     if (!snap.exists()) return callback(null);
     callback({ id: snap.id, ...snap.data() });
   });
+}
+
+/**
+ * Get all sealed letters sent to a specific recipient (by email).
+ * Used to show recipient history in the recipient profile.
+ */
+export function getLettersToRecipient(userId, recipientEmail) {
+  const lettersRef = collection(db, LETTERS_COL);
+  const q = query(
+    lettersRef,
+    where('senderId', '==', userId),
+    where('recipientEmail', '==', recipientEmail),
+    where('status', 'in', ['sealed', 'delivered', 'opened']),
+    orderBy('sentAt', 'desc')
+  );
+  return getDocs(q).then(snap =>
+    snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  );
 }

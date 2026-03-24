@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createRecipient, updateRecipient, deleteRecipient } from '../../lib/recipients';
+import { getLettersToRecipient } from '../../lib/firestore';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import './RecipientModal.css';
@@ -13,6 +14,18 @@ const RELATIONSHIP_OPTIONS = [
   { value: 'other', label: 'Other' },
 ];
 
+const STATUS_LABELS = {
+  sealed: 'Scheduled',
+  delivered: 'Delivered',
+  opened: 'Opened',
+};
+
+function formatDate(date) {
+  if (!date) return '';
+  const d = date.toDate ? date.toDate() : new Date(date);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 export default function RecipientModal({ user, recipient, onClose, onSaved, onDeleted }) {
   const isEditing = !!recipient;
   const [name, setName] = useState(recipient?.name || '');
@@ -21,6 +34,23 @@ export default function RecipientModal({ user, recipient, onClose, onSaved, onDe
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [letterHistory, setLetterHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  // Fetch letter history when editing an existing recipient with an email
+  useEffect(() => {
+    if (!isEditing || !recipient?.email) return;
+    setHistoryLoading(true);
+    getLettersToRecipient(user.uid, recipient.email)
+      .then(letters => {
+        setLetterHistory(letters || []);
+        setHistoryLoading(false);
+      })
+      .catch(() => {
+        setLetterHistory([]);
+        setHistoryLoading(false);
+      });
+  }, [isEditing, recipient?.email, user?.uid]);
 
   async function handleSave(e) {
     e.preventDefault();
@@ -126,6 +156,42 @@ export default function RecipientModal({ user, recipient, onClose, onSaved, onDe
                 <p className="recipient-modal-error-title">Recipient creation failed</p>
                 <p className="recipient-modal-error-body">{error}</p>
               </div>
+            </div>
+          )}
+
+          {/* Letter history — shown when editing a recipient with email */}
+          {isEditing && recipient?.email && (
+            <div className="recipient-history">
+              <h4 className="recipient-history-title">
+                Letters sent to {recipient.name}
+              </h4>
+              {historyLoading ? (
+                <p className="recipient-history-empty">Loading…</p>
+              ) : letterHistory.length === 0 ? (
+                <p className="recipient-history-empty">
+                  No letters sent yet. Write one from the{' '}
+                  <a href="/write" className="recipient-history-link">letter editor</a>.
+                </p>
+              ) : (
+                <div className="recipient-history-list">
+                  {letterHistory.map(letter => (
+                    <div key={letter.id} className="recipient-history-item">
+                      <div className="recipient-history-item-icon">
+                        {letter.status === 'opened' ? '✦' : letter.status === 'delivered' ? '✓' : '◷'}
+                      </div>
+                      <div className="recipient-history-item-info">
+                        <p className="recipient-history-item-subject">
+                          {letter.subject || 'No subject'}
+                        </p>
+                        <p className="recipient-history-item-date">
+                          {letter.deliverAt ? `Delivers ${formatDate(letter.deliverAt)}` : ''}
+                          {letter.sentAt ? ` · ${STATUS_LABELS[letter.status] || letter.status}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

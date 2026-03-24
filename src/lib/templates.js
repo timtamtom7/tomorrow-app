@@ -122,6 +122,19 @@ export const LETTER_TEMPLATES = [
       "What small thing brought you joy recently?",
     ],
   },
+  {
+    id: 'hard-times',
+    title: 'Letter to Myself During Hard Times',
+    icon: '🔥',
+    recipientType: 'me',
+    description: 'Words for a future version of yourself in the middle of a storm.',
+    placeholder: "Dear Future Me,\n\nIf you're reading this, things are hard right now. I want you to know — you will get through this.\n\nRight now, as I write this, the hardest thing is...\n\nWhat I want you to remember when things feel impossible...\n\nOne thing that got me through difficult times before...\n\nWhat I want you to do right now if everything feels like too much...\n\nSomething that is true, no matter how dark it feels...\n\nThe thing I want you to hold onto is...",
+    prompts: [
+      "What would you tell a close friend going through the same thing?",
+      "What small step could you take right now?",
+      "What is one thing you can control right now?",
+    ],
+  },
 ];
 
 export function getTemplateById(id) {
