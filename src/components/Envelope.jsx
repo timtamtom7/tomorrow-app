@@ -6,19 +6,22 @@ export default function Envelope({ onComplete }) {
 
   useEffect(() => {
     const timers = [
-      setTimeout(() => setPhase('opening'), 400),
-      setTimeout(() => setPhase('open'), 1100),
-      setTimeout(() => setPhase('reveal'), 1600),
-      setTimeout(() => onComplete && onComplete(), 2200),
+      setTimeout(() => setPhase('shaking'), 400),
+      setTimeout(() => setPhase('opening'), 900),
+      setTimeout(() => setPhase('open'), 1400),
+      setTimeout(() => setPhase('reveal'), 1800),
+      setTimeout(() => onComplete && onComplete(), 2400),
     ];
     return () => timers.forEach(clearTimeout);
   }, [onComplete]);
 
   return (
     <div className="envelope-wrapper">
-      <div className={`envelope ${phase === 'open' || phase === 'reveal' ? 'envelope-open' : ''}`}>
+      <div className={`envelope ${phase}`}>
         {/* Envelope body */}
         <div className="envelope-body">
+          {/* Pocket shadow */}
+          <div className="envelope-pocket" />
           {/* Flap */}
           <div className={`envelope-flap ${phase === 'opening' ? 'envelope-flap-opening' : ''} ${phase === 'open' || phase === 'reveal' ? 'envelope-flap-open' : ''}`} />
           {/* Letter inside */}

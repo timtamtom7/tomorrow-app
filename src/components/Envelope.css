@@ -9,31 +9,59 @@
 
 .envelope {
   position: relative;
-  width: 200px;
-  height: 140px;
+  width: 220px;
+  height: 154px;
   transition: transform 0.3s var(--ease-out);
+}
+
+/* Shake animation */
+.envelope.shaking {
+  animation: envelopeShake 500ms var(--ease-in-out) forwards;
+}
+
+@keyframes envelopeShake {
+  0%   { transform: translateX(0) rotate(0deg); }
+  15%  { transform: translateX(-4px) rotate(-1deg); }
+  30%  { transform: translateX(4px) rotate(1deg); }
+  45%  { transform: translateX(-3px) rotate(-0.5deg); }
+  60%  { transform: translateX(3px) rotate(0.5deg); }
+  75%  { transform: translateX(-2px) rotate(-0.25deg); }
+  90%  { transform: translateX(2px) rotate(0.25deg); }
+  100% { transform: translateX(0) rotate(0deg); }
 }
 
 /* Envelope body (the back part) */
 .envelope-body {
   position: absolute;
   inset: 0;
-  background: var(--surface-elevated);
+  background: linear-gradient(160deg, #1e1e1c 0%, #161614 100%);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   overflow: hidden;
+  box-shadow: var(--shadow-md);
 }
 
-/* The envelope pocket / bottom triangle effect */
-.envelope-body::before {
+/* Envelope pocket / bottom triangle effect */
+.envelope-pocket {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 65%;
+  background: linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+/* Bottom tuck */
+.envelope-body::after {
   content: '';
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 70%;
-  background: linear-gradient(to top, var(--surface-hover) 0%, transparent 100%);
-  opacity: 0.3;
+  height: 35%;
+  background: linear-gradient(to top, #1a1a18 0%, #1e1e1c 100%);
+  clip-path: polygon(0 0, 50% 100%, 100% 0);
 }
 
 /* Envelope flap (top triangle) */
@@ -42,17 +70,17 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 60px;
-  background: var(--surface-elevated);
-  border-bottom: 1px solid var(--border-subtle);
+  height: 70px;
+  background: linear-gradient(160deg, #222220 0%, #1a1a18 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
   transform-origin: top center;
-  transition: transform 600ms var(--ease-in-out);
+  transition: transform 700ms var(--ease-in-out);
   z-index: 2;
   clip-path: polygon(0 0, 100% 0, 50% 100%);
 }
 
 .envelope-flap-opening {
-  transform: rotateX(30deg);
+  transform: rotateX(20deg);
 }
 
 .envelope-flap-open {
@@ -62,26 +90,27 @@
 /* Letter inside */
 .envelope-letter {
   position: absolute;
-  bottom: 20px;
-  left: 20px;
-  right: 20px;
-  height: 80px;
-  background: var(--surface-card);
+  bottom: 28px;
+  left: 22px;
+  right: 22px;
+  height: 90px;
+  background: linear-gradient(145deg, #f5f0e8 0%, #ede8dc 100%);
   border-radius: var(--radius-sm);
   opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 500ms var(--ease-out), transform 500ms var(--ease-out);
-  padding: var(--space-3);
+  transform: translateY(24px);
+  transition: opacity 500ms var(--ease-out), transform 600ms var(--ease-out);
+  padding: var(--space-3) var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 6px;
   justify-content: center;
   z-index: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .envelope-letter-reveal {
   opacity: 1;
-  transform: translateY(-20px);
+  transform: translateY(-30px);
 }
 
 .envelope-letter-lines {
@@ -91,20 +120,20 @@
 }
 
 .envelope-line {
-  height: 8px;
-  background: var(--border-strong);
+  height: 7px;
+  background: rgba(0,0,0,0.12);
   border-radius: var(--radius-full);
 }
 
 /* Wax seal */
 .envelope-seal {
   position: absolute;
-  bottom: -16px;
+  bottom: -14px;
   left: 50%;
   transform: translateX(-50%);
-  width: 36px;
-  height: 36px;
-  background: var(--color-accent);
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle at 35% 35%, #ff7a2a 0%, var(--color-accent) 50%, #c44d00 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -112,25 +141,29 @@
   color: white;
   font-size: 16px;
   z-index: 3;
-  box-shadow: 0 2px 8px rgba(232, 93, 4, 0.4);
-  transition: transform 300ms var(--ease-out), opacity 300ms var(--ease-out);
+  box-shadow: 0 4px 16px rgba(232, 93, 4, 0.5), inset 0 1px 2px rgba(255,255,255,0.2);
+  transition: transform 400ms var(--ease-out), opacity 300ms var(--ease-out);
 }
 
 .envelope-seal-broken {
   opacity: 0;
-  transform: translateX(-50%) scale(0.5);
+  transform: translateX(-50%) scale(0.3) rotate(45deg);
 }
 
 @media (max-width: 768px) {
   .envelope {
-    width: 160px;
-    height: 112px;
+    width: 176px;
+    height: 124px;
+  }
+
+  .envelope-flap {
+    height: 56px;
   }
 
   .envelope-letter {
-    bottom: 16px;
-    left: 16px;
-    right: 16px;
-    height: 64px;
+    bottom: 22px;
+    left: 18px;
+    right: 18px;
+    height: 72px;
   }
 }

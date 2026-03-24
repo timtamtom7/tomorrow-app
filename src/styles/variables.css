@@ -114,6 +114,11 @@
   --space-12: 48px;
   --space-16: 64px;
 
+  /* Z-index */
+  --z-sticky: 100;
+  --z-overlay: 200;
+  --z-modal: 300;
+
   /* Motion */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);

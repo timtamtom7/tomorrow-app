@@ -74,32 +74,34 @@ export default function ReadLetter() {
 
       <main className="read-main">
         <div className="read-container">
-          {/* Phase: Confirm */}
+          {/* Phase: Confirm — dark overlay modal */}
           {phase === 'confirm' && (
-            <div className="read-confirm stagger-in">
-              <div className="read-confirm-stamp">
-                <div className="read-stamp-circle">
-                  <span>✦</span>
+            <div className="read-confirm-overlay">
+              <div className="read-confirm stagger-in">
+                <div className="read-confirm-stamp">
+                  <div className="read-stamp-circle">
+                    <span>✦</span>
+                  </div>
                 </div>
-              </div>
-              <p className="read-confirm-from">
-                You have a letter from
-              </p>
-              <h1 className="read-confirm-sender">
-                {letter?.senderName}
-              </h1>
-              <div className="read-confirm-divider" />
-              <p className="read-confirm-warning">
-                Once you open this, it will be sealed forever.
-                <br />No copies. No archives. Just this moment.
-              </p>
-              <div className="read-confirm-actions">
-                <Button variant="primary" size="lg" onClick={handleOpen}>
-                  ✦ Open the Letter
-                </Button>
-                <Button variant="ghost" size="lg" onClick={handleMaybeLater}>
-                  Maybe Later
-                </Button>
+                <p className="read-confirm-from">
+                  You have a letter from
+                </p>
+                <h1 className="read-confirm-sender">
+                  {letter?.senderName}
+                </h1>
+                <div className="read-confirm-divider" />
+                <p className="read-confirm-warning">
+                  Once you open this, it will be sealed forever.
+                  <br />No copies. No archives. Just this moment.
+                </p>
+                <div className="read-confirm-actions">
+                  <Button variant="primary" size="lg" onClick={handleOpen}>
+                    ✦ Open the Letter
+                  </Button>
+                  <Button variant="ghost" size="lg" onClick={handleMaybeLater}>
+                    Maybe Later
+                  </Button>
+                </div>
               </div>
             </div>
           )}

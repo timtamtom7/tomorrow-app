@@ -18,9 +18,11 @@
 .card-hover:hover {
   border-color: var(--border-strong);
   box-shadow: var(--shadow-sm);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  transition-duration: var(--duration-normal);
 }
 
 .card-hover:active {
   transform: translateY(0) scale(0.99);
+  transition-duration: var(--duration-fast);
 }

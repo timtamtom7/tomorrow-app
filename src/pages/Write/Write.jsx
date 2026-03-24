@@ -125,7 +125,7 @@ export default function Write() {
 
           <form className="write-form" onSubmit={() => {}} noValidate>
             {/* Recipient */}
-            <section className="write-section">
+            <section className="write-section stagger-in">
               <h2 className="write-section-title">Who is this letter for?</h2>
               <div className="recipient-type-selector">
                 {RECIPIENT_TYPES.map(rt => (
@@ -169,7 +169,7 @@ export default function Write() {
             </section>
 
             {/* Subject */}
-            <section className="write-section">
+            <section className="write-section stagger-in">
               <Input
                 label="Subject line (optional)"
                 placeholder="A note for when things change…"
@@ -180,7 +180,7 @@ export default function Write() {
             </section>
 
             {/* Body */}
-            <section className="write-section">
+            <section className="write-section write-textarea-section stagger-in">
               <Textarea
                 label="Your letter"
                 placeholder="Dear Future Me,&#10;&#10;Right now, I'm…&#10;&#10;I hope that when you read this…"
@@ -195,7 +195,7 @@ export default function Write() {
             </section>
 
             {/* Tone */}
-            <section className="write-section">
+            <section className="write-section stagger-in">
               <h2 className="write-section-title">How should this feel? <span className="write-optional">(optional)</span></h2>
               <div className="tone-selector">
                 {TONES.map(t => (
@@ -213,7 +213,7 @@ export default function Write() {
             </section>
 
             {/* Delivery date */}
-            <section className="write-section">
+            <section className="write-section stagger-in">
               <h2 className="write-section-title">When should this arrive?</h2>
               <Input
                 type="date"
