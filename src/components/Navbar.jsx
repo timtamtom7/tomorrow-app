@@ -31,6 +31,12 @@ export default function Navbar({ showWrite = true }) {
               <Link to="/app/recipients" className="navbar-link">
                 Recipients
               </Link>
+              <Link to="/app/ai-insights" className="navbar-link">
+                AI Insights
+              </Link>
+              <Link to="/app/family-tree" className="navbar-link">
+                Family Tree
+              </Link>
               <Link to="/write" className="navbar-write">
                 <Button variant="primary" size="sm">
                   Write a Letter

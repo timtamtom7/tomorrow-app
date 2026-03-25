@@ -620,3 +620,64 @@
   font-size: var(--text-sm);
   color: var(--text-muted);
 }
+
+/* Physical Mail */
+.physical-mail-header {
+  margin-bottom: 0;
+}
+
+.physical-mail-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.write-section-subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.physical-mail-form {
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.physical-mail-pricing {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.physical-mail-price-tag {
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.physical-mail-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.physical-mail-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.physical-mail-note {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  line-height: 1.6;
+  padding: 0.75rem;
+  background: var(--surface-bg);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-accent);
+}

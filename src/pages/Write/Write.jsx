@@ -84,6 +84,15 @@ export default function Write() {
   const [photoAttachment, setPhotoAttachment] = useState(null);
   const [voiceAttachment, setVoiceAttachment] = useState(null);
 
+  // Physical mail (Legacy)
+  const [sendPhysical, setSendPhysical] = useState(false);
+  const [physicalName, setPhysicalName] = useState('');
+  const [physicalStreet, setPhysicalStreet] = useState('');
+  const [physicalCity, setPhysicalCity] = useState('');
+  const [physicalState, setPhysicalState] = useState('');
+  const [physicalZip, setPhysicalZip] = useState('');
+  const [physicalCountry, setPhysicalCountry] = useState('US');
+
   // UI state
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
@@ -180,6 +189,15 @@ export default function Write() {
       photoAttachment: photoAttachment || null,
       voiceAttachment: voiceAttachment || null,
       allowReply,
+      sendPhysical: subscription.plan === 'legacy' ? sendPhysical : false,
+      physicalAddress: sendPhysical ? {
+        name: physicalName || recipientNameVal,
+        street: physicalStreet,
+        city: physicalCity,
+        state: physicalState,
+        zip: physicalZip,
+        country: physicalCountry,
+      } : null,
     };
   }
 
@@ -213,6 +231,12 @@ export default function Write() {
     else if (body.plain.trim().length < 10) errs.body = 'Your letter feels a bit short. Say a bit more.';
     if (!deliverAt) errs.deliverAt = 'Pick a delivery date.';
     if (deliverAt && new Date(deliverAt) <= new Date()) errs.deliverAt = 'Choose a date in the future.';
+    if (sendPhysical && subscription.plan === 'legacy') {
+      if (!physicalStreet.trim()) errs.physicalStreet = 'Street address is required for physical mail.';
+      if (!physicalCity.trim()) errs.physicalCity = 'City is required for physical mail.';
+      if (!physicalState.trim()) errs.physicalState = 'State is required for physical mail.';
+      if (!physicalZip.trim()) errs.physicalZip = 'ZIP code is required for physical mail.';
+    }
     return errs;
   }
 
@@ -593,6 +617,96 @@ export default function Write() {
                     <span className="toggle-thumb" />
                   </button>
                 </div>
+              </section>
+            )}
+
+            {/* Physical mail (Legacy) */}
+            {subscription.plan === 'legacy' && recipientType !== 'me' && (
+              <section className="write-section stagger-in">
+                <div className="physical-mail-header">
+                  <div className="physical-mail-title-row">
+                    <div>
+                      <h2 className="write-section-title">Physical Mail</h2>
+                      <p className="write-section-subtitle">Also send this as a printed letter by mail — handled by Tomorrow's print & mail service.</p>
+                    </div>
+                    <button
+                      type="button"
+                      className={`toggle ${sendPhysical ? 'toggle-on' : ''}`}
+                      onClick={() => setSendPhysical(!sendPhysical)}
+                      role="switch"
+                      aria-checked={sendPhysical}
+                    >
+                      <span className="toggle-thumb" />
+                    </button>
+                  </div>
+                </div>
+
+                {sendPhysical && (
+                  <div className="physical-mail-form stagger-in">
+                    <p className="physical-mail-pricing">
+                      <span className="physical-mail-price-tag">+$1.99</span> per letter · Delivered 5–8 business days before the scheduled date
+                    </p>
+
+                    <div className="physical-mail-grid">
+                      <Input
+                        label="Recipient name"
+                        placeholder="Full name"
+                        value={physicalName || recipientName}
+                        onChange={e => { setPhysicalName(e.target.value); hasLoadedInitial.current = true; }}
+                      />
+                      <Input
+                        label="Street address"
+                        placeholder="123 Main St"
+                        value={physicalStreet}
+                        onChange={e => { setPhysicalStreet(e.target.value); hasLoadedInitial.current = true; }}
+                        error={errors.physicalStreet}
+                      />
+                      <Input
+                        label="City"
+                        placeholder="San Francisco"
+                        value={physicalCity}
+                        onChange={e => { setPhysicalCity(e.target.value); hasLoadedInitial.current = true; }}
+                        error={errors.physicalCity}
+                      />
+                      <div className="physical-mail-row-2">
+                        <Input
+                          label="State"
+                          placeholder="CA"
+                          value={physicalState}
+                          onChange={e => { setPhysicalState(e.target.value); hasLoadedInitial.current = true; }}
+                          error={errors.physicalState}
+                        />
+                        <Input
+                          label="ZIP code"
+                          placeholder="94102"
+                          value={physicalZip}
+                          onChange={e => { setPhysicalZip(e.target.value); hasLoadedInitial.current = true; }}
+                          error={errors.physicalZip}
+                        />
+                      </div>
+                      <div className="field">
+                        <label className="field-label">Country</label>
+                        <div className="relationship-picker">
+                          {['US', 'CA', 'UK', 'AU', 'DE', 'FR', 'IT', 'ES', 'Other'].map(c => (
+                            <button
+                              key={c}
+                              type="button"
+                              className={`relationship-chip ${physicalCountry === c ? 'relationship-chip-active' : ''}`}
+                              onClick={() => { setPhysicalCountry(c); hasLoadedInitial.current = true; }}
+                            >
+                              {c}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="physical-mail-note">
+                      Your letter will be printed on premium paper, sealed in an envelope,
+                      and mailed on your chosen delivery date. A digital copy is also saved in Tomorrow.
+                    </p>
+                  </div>
+                )}
               </section>
             )}
 
