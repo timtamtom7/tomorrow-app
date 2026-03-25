@@ -12,6 +12,8 @@ import Pricing from './pages/Pricing/Pricing';
 import Recipients from './pages/Recipients/Recipients';
 import AIInsights from './pages/AIInsights/AIInsights';
 import FamilyTree from './pages/FamilyTree/FamilyTree';
+import Community from './pages/Community/Community';
+import Gift from './pages/Gift/Gift';
 import FirebaseErrorBanner from './components/ErrorState/FirebaseErrorBanner';
 import OnboardingOverlay from './components/Onboarding/OnboardingOverlay';
 import './styles/global.css';
@@ -35,6 +37,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/community" element={<Community />} />
+          <Route path="/gift" element={<Gift />} />
           <Route path="/write" element={<Write />} />
           <Route path="/app" element={<Dashboard />} />
           <Route path="/app/letters/:id" element={<LetterDetail />} />

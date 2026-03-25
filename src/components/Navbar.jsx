@@ -25,6 +25,8 @@ export default function Navbar({ showWrite = true }) {
           {user ? (
             <>
               <Link to="/pricing" className="navbar-link">Pricing</Link>
+              <Link to="/community" className="navbar-link">Community</Link>
+              <Link to="/gift" className="navbar-link">Gift</Link>
               <Link to="/app" className="navbar-link">
                 Your Letters
               </Link>
@@ -49,6 +51,8 @@ export default function Navbar({ showWrite = true }) {
           ) : (
             <>
               <Link to="/pricing" className="navbar-link">Pricing</Link>
+              <Link to="/community" className="navbar-link">Community</Link>
+              <Link to="/gift" className="navbar-link">Gift</Link>
               <Link to="/auth" className="navbar-link">Sign In</Link>
               {showWrite && (
                 <Link to="/write">

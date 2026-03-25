@@ -20,6 +20,39 @@ function saveSubscription(sub) {
   localStorage.setItem('tomorrow-subscription', JSON.stringify(sub));
 }
 
+function getNotificationPrefs() {
+  try {
+    return JSON.parse(localStorage.getItem('tomorrow-notifications') || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function saveNotificationPrefs(prefs) {
+  localStorage.setItem('tomorrow-notifications', JSON.stringify(prefs));
+}
+
+function NotificationToggle({ label, description, enabled, onToggle }) {
+  return (
+    <div className="settings-notification settings-notification-toggle">
+      <div>
+        <p className="settings-notification-title">{label}</p>
+        <p className="settings-notification-hint">{description}</p>
+      </div>
+      <div
+        className={`settings-toggle ${enabled ? 'settings-toggle-on' : ''}`}
+        onClick={onToggle}
+        role="switch"
+        aria-checked={enabled}
+        tabIndex={0}
+        onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onToggle()}
+      >
+        <div className="settings-toggle-knob" />
+      </div>
+    </div>
+  );
+}
+
 const PLAN_FEATURES = {
   free: [],
   keeper: [
@@ -42,6 +75,11 @@ export default function Settings() {
   const navigate = useNavigate();
   const [theme, setTheme] = useState(() => document.documentElement.getAttribute('data-theme') || 'dark');
   const [subscription, setSubscription] = useState(getSubscription);
+  const [notifPrefs, setNotifPrefs] = useState(getNotificationPrefs);
+  const [communityOptIn, setCommunityOptIn] = useState(() => {
+    const saved = localStorage.getItem('tomorrow-community-optin');
+    return saved === 'true';
+  });
 
   useEffect(() => {
     if (!user) { navigate('/auth'); }
@@ -67,6 +105,23 @@ export default function Settings() {
     if (!window.confirm('Cancel your subscription? Your letters will still be delivered on their scheduled dates.')) return;
     saveSubscription({ plan: 'free' });
     setSubscription({ plan: 'free' });
+  }
+
+  function handleNotifToggle(key) {
+    const updated = { ...notifPrefs, [key]: !notifPrefs[key] };
+    setNotifPrefs(updated);
+    saveNotificationPrefs(updated);
+    // Request browser notification permission if enabling
+    if (updated[key] && !('Notification' in window)) {
+      alert('This browser does not support push notifications.');
+    } else if (updated[key] && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }
+
+  function handleCommunityOptIn(value) {
+    setCommunityOptIn(value);
+    localStorage.setItem('tomorrow-community-optin', String(value));
   }
 
   const planName = subscription.plan === 'keeper' ? 'Keeper' : subscription.plan === 'legacy' ? 'Legacy' : 'Free';
@@ -194,27 +249,57 @@ export default function Settings() {
           <section className="settings-section">
             <h2 className="settings-section-title">Notifications</h2>
             <Card>
+              <NotificationToggle
+                label="Letter delivery reminder"
+                description="7 days before a letter is delivered"
+                enabled={!!notifPrefs.deliveryReminder}
+                onToggle={() => handleNotifToggle('deliveryReminder')}
+              />
+              <NotificationToggle
+                label="Letter delivered"
+                description="When your letter has been opened by the recipient"
+                enabled={!!notifPrefs.letterDelivered}
+                onToggle={() => handleNotifToggle('letterDelivered')}
+              />
+              <NotificationToggle
+                label="Write reminder"
+                description="Remind me to write a letter when I haven't in 3 months"
+                enabled={!!notifPrefs.writeReminder}
+                onToggle={() => handleNotifToggle('writeReminder')}
+              />
+              <NotificationToggle
+                label="Someone wrote me a letter"
+                description="When you receive a new letter"
+                enabled={!!notifPrefs.receivedLetter}
+                onToggle={() => handleNotifToggle('receivedLetter')}
+              />
               <div className="settings-notification">
                 <div>
-                  <p className="settings-notification-title">Letter delivery reminder</p>
-                  <p className="settings-notification-hint">7 days before a letter is delivered</p>
+                  <p className="settings-notification-title">Browser push notifications</p>
+                  <p className="settings-notification-hint">
+                    {typeof Notification !== 'undefined'
+                      ? Notification.permission === 'granted'
+                        ? "Enabled — you will receive push notifications"
+                        : Notification.permission === 'denied'
+                        ? 'Blocked by your browser. Enable in browser settings.'
+                        : 'Not yet requested — toggle a notification above to enable.'
+                      : 'Not supported in this browser'}
+                  </p>
                 </div>
-                <span className="settings-notification-status">Email (coming soon)</span>
               </div>
-              <div className="settings-notification">
-                <div>
-                  <p className="settings-notification-title">Letter delivered</p>
-                  <p className="settings-notification-hint">When your letter has been opened</p>
-                </div>
-                <span className="settings-notification-status">Email (coming soon)</span>
-              </div>
-              <div className="settings-notification">
-                <div>
-                  <p className="settings-notification-title">Letter expired</p>
-                  <p className="settings-notification-hint">When a letter was never claimed</p>
-                </div>
-                <span className="settings-notification-status">Email (coming soon)</span>
-              </div>
+            </Card>
+          </section>
+
+          {/* Community */}
+          <section className="settings-section">
+            <h2 className="settings-section-title">Community</h2>
+            <Card>
+              <NotificationToggle
+                label="Share delivered letters to the community archive"
+                description="When a letter is delivered, add it to the community archive so others can read it. You remain anonymous unless you choose otherwise."
+                enabled={communityOptIn}
+                onToggle={() => handleCommunityOptIn(!communityOptIn)}
+              />
             </Card>
           </section>
 

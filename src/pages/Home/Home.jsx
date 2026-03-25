@@ -165,6 +165,17 @@ export default function Home() {
                 you think you'll be through it — and see if you were right.
               </p>
             </div>
+            <div className="usecase-card">
+              <div className="usecase-icon">🎁</div>
+              <h3 className="usecase-title">Gift a Subscription</h3>
+              <p className="usecase-body">
+                Give the gift of time. A Tomorrow subscription is a letter that
+                lasts — perfect for someone who needs a message from the past.
+              </p>
+              <Link to="/gift" className="usecase-pro-badge" style={{ textDecoration: 'none' }}>
+                Give a Gift →
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -227,6 +238,8 @@ export default function Home() {
         <p>Tomorrow — A message from the past.</p>
         <div className="home-footer-links">
           <Link to="/pricing">Pricing</Link>
+          <Link to="/community">Community</Link>
+          <Link to="/gift">Gift</Link>
           <a href="/privacy">Privacy</a>
           <a href="/terms">Terms</a>
           <Link to="/settings">Settings</Link>
